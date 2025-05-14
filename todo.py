@@ -1,4 +1,3 @@
-
 import tkinter as tk
 from tkinter import ttk, messagebox
 import os
@@ -7,14 +6,14 @@ import pygame
 import uuid
 from datetime import datetime
 import time
+
 dir_name = os.path.dirname(__file__)
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = os.path.join(dir_name, 'keys.json')
-tasks_dir = os.path.join(dir_name, 'tasks')
-speeches_dir = os.path.join(dir_name, 'speeches')
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.join(dir_name, "keys.json")
+tasks_dir = os.path.join(dir_name, "tasks")
+speeches_dir = os.path.join(dir_name, "speeches")
+
 
 def speak(text_to_speak):
-    # Получаем текст из tk.Text
-    #text_to_speak = "Я пытаюсь изучить программирование на Python."#self.text.get("1.0", tk.END).strip()
     if not text_to_speak:
         messagebox.showwarning("Ошибка", "Поле текста пустое!")
         return
@@ -27,12 +26,12 @@ def speak(text_to_speak):
     voice = texttospeech.VoiceSelectionParams(
         language_code="ru-RU",  # Русский язык
         name="ru-RU-Wavenet-A",  # Голос (WaveNet для естественного звучания)
-        ssml_gender=texttospeech.SsmlVoiceGender.FEMALE
+        ssml_gender=texttospeech.SsmlVoiceGender.FEMALE,
     )
     audio_config = texttospeech.AudioConfig(
         audio_encoding=texttospeech.AudioEncoding.MP3,
         speaking_rate=1.0,  # Скорость речи
-        pitch=0.0  # Тон
+        pitch=0.0,  # Тон
     )
 
     # Запрос на синтез речи
@@ -42,13 +41,16 @@ def speak(text_to_speak):
 
     return response.audio_content
 
+
 class Todo(ttk.Frame):
-    def __init__(self, frame, title, body, old = None):
-        tk.Frame.__init__(self, master=frame, bg='lightblue')
-        
+    def __init__(self, frame, title, body, old=None):
+        tk.Frame.__init__(self, master=frame, bg="lightblue")
+
         self.update(old)
 
-        self.idlbl = ttk.Label(self, text=f"{self.id} {self.updated}", font=("Arial", 6, "bold"))
+        self.idlbl = ttk.Label(
+            self, text=f"{self.id} {self.updated}", font=("Arial", 6, "bold")
+        )
         self.idlbl.pack(fill="both", expand=True, padx=4, pady=3)
         self.lbl = ttk.Label(self, text=title)
         self.text = tk.Text(self, height=3)
@@ -63,21 +65,23 @@ class Todo(ttk.Frame):
 
         play = ttk.Button(self, text="Play", command=self.play)
         play.pack(fill="both", expand=True, padx=4, pady=4)
-        
-        save = ttk.Button(self, text="Save", command=lambda: self.save_file(rewrite=True))
+
+        save = ttk.Button(
+            self, text="Save", command=lambda: self.save_file(rewrite=True)
+        )
         save.pack(fill="both", expand=True, padx=4, pady=4)
-        if not old: # если файл не создан
+        if not old:  # если файл не создан
             self.save_file()
 
-    def save_file(self, rewrite = False):
+    def save_file(self, rewrite=False):
         if rewrite:
             os.remove(self.mp3_path)
             os.remove(self.text_path)
             self.update()
             self.idlbl.config(text=f"{self.id} {self.updated}")
 
-        with open(self.text_path, 'w', encoding='utf-8') as f:
-            f.write(self.lbl['text'] + '\n')
+        with open(self.text_path, "w", encoding="utf-8") as f:
+            f.write(self.lbl["text"] + "\n")
             f.write(self.text.get("1.0", tk.END))
         audio_content = speak(self.text.get("1.0", tk.END))
 
@@ -88,13 +92,13 @@ class Todo(ttk.Frame):
         os.remove(self.mp3_path)
         os.remove(self.text_path)
         self.destroy()
-    
-    def update(self, old = None):
+
+    def update(self, old=None):
         if old:
-            self.updated = old.split('$')[0]
-            self.id = old.split('$')[1]
+            self.updated = old.split("$")[0]
+            self.id = old.split("$")[1]
         else:
-            self.updated = datetime.now().strftime('%m-%d-%Y %H-%M-%S')
+            self.updated = datetime.now().strftime("%m-%d-%Y %H-%M-%S")
             self.id = uuid.uuid1().hex
 
         file_name = self.updated + "$" + self.id
@@ -109,26 +113,30 @@ class Todo(ttk.Frame):
             pygame.time.Clock().tick(10)
         pygame.mixer.music.unload()
 
+
 def createOnFrame(frame, lable, input):
     if input.get("1.0", tk.END).strip() == "":
         messagebox.showwarning("Ошибка", "Поле текста пустое!")
         return
     Todo(frame, lable.get(), input.get("1.0", tk.END))
     lable.delete(0, tk.END)
-    input.delete('1.0', tk.END)
+    input.delete("1.0", tk.END)
     update_scrollregion(frame.master)
-    
+
+
 def update_scrollregion(canvas):
     canvas.configure(scrollregion=canvas.bbox("all"))
     canvas.yview_moveto(1.0)
 
+
 def load(frame):
     for file in os.listdir(tasks_dir):
-        with open(os.path.join(tasks_dir, file), 'r', encoding='utf-8') as f:
+        with open(os.path.join(tasks_dir, file), "r", encoding="utf-8") as f:
             lines = f.readlines()
             title = lines[0].strip()
-            
-            Todo(frame, title, '\n'.join(lines[1:]), old = file[:-4])
+
+            Todo(frame, title, "\n".join(lines[1:]), old=file[:-4])
+
 
 def play_all(frame):
     for child in frame.winfo_children():
@@ -136,10 +144,11 @@ def play_all(frame):
             child.play()
             time.sleep(0.4)
 
+
 if __name__ == "__main__":
     root = tk.Tk()
     root.geometry("800x600")
-    root.title("TODO") 
+    root.title("TODO")
     scrollbar = ttk.Scrollbar(root)
     scrollbar.pack(side="right", fill="y")
     canvas = tk.Canvas(root, yscrollcommand=scrollbar.set)
@@ -153,19 +162,29 @@ if __name__ == "__main__":
     input = tk.Text(frame_control, width=50, height=7)
     input.pack(padx=10, pady=10)
     frame = tk.Frame(canvas)
-    button = ttk.Button(frame_control, text="Create", width=30, command=lambda: createOnFrame(frame, lable, input))
+    button = ttk.Button(
+        frame_control,
+        text="Create",
+        width=30,
+        command=lambda: createOnFrame(frame, lable, input),
+    )
     button.pack(padx=10, pady=10)
-    
-    button = ttk.Button(frame_control, text="Play all", width=30, command=lambda: play_all(frame))
+
+    button = ttk.Button(
+        frame_control, text="Play all", width=30, command=lambda: play_all(frame)
+    )
     button.pack(padx=10, pady=10)
 
     canvas.create_window(0, 0, window=frame, anchor="nw", width=canvas.winfo_width())
     scrollbar.config(command=canvas.yview)
 
-    canvas.bind('<Configure>', lambda e: canvas.itemconfig(canvas.find_all()[0], width=canvas.winfo_width()))
-    root.after(290, lambda : canvas.configure(scrollregion=canvas.bbox("all")))
+    canvas.bind(
+        "<Configure>",
+        lambda e: canvas.itemconfig(canvas.find_all()[0], width=canvas.winfo_width()),
+    )
+    root.after(290, lambda: canvas.configure(scrollregion=canvas.bbox("all")))
     root.bind("<Delete>", lambda event: createOnFrame(frame, lable, input))
     root.bind("<Escape>", lambda event: root.destroy())
     load(frame)
-    
+
     root.mainloop()
