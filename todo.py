@@ -59,19 +59,20 @@ class Todo(ttk.Frame):
         self.lbl.pack(fill="both", expand=True, padx=4, pady=4)
         self.text.pack(fill="both", expand=True, padx=4, pady=4)
         btn.pack(fill="both", expand=True, padx=4, pady=4)
-        self.pack(fill="both", expand=True, padx=4, pady=4)
 
         btn.bind("<Button-1>", lambda event: self.remove_frame())
 
         play = ttk.Button(self, text="Play", command=self.play)
-        play.pack(fill="both", expand=True, padx=4, pady=4)
 
         save = ttk.Button(
             self, text="Save", command=lambda: self.save_file(rewrite=True)
         )
         save.pack(fill="both", expand=True, padx=4, pady=4)
+        play.pack(fill="both", expand=True, padx=4, pady=4)
         if not old:  # если файл не создан
             self.save_file()
+        else:
+            self.pack(fill="both", expand=True, padx=4, pady=4)
 
     def save_file(self, rewrite=False):
         if rewrite:
@@ -92,6 +93,9 @@ class Todo(ttk.Frame):
         os.remove(self.mp3_path)
         os.remove(self.text_path)
         self.destroy()
+        frame = self.master
+        frame.update_idletasks()
+        update_scrollregion(frame.master)
 
     def update(self, old=None):
         if old:
@@ -118,9 +122,10 @@ def createOnFrame(frame, lable, input):
     if input.get("1.0", tk.END).strip() == "":
         messagebox.showwarning("Ошибка", "Поле текста пустое!")
         return
-    Todo(frame, lable.get(), input.get("1.0", tk.END))
+    Todo(frame, lable.get(), input.get("1.0", tk.END)).pack(fill="both", expand=True, padx=4, pady=4)
     lable.delete(0, tk.END)
     input.delete("1.0", tk.END)
+    frame.update_idletasks()
     update_scrollregion(frame.master)
 
 
@@ -144,6 +149,28 @@ def play_all(frame):
             child.play()
             time.sleep(0.4)
 
+def set_control_frame(root, frame):
+    frame_control = tk.Frame(root, bg="lightgray")
+    frame_control.pack(side="right", fill="y", padx=10, pady=10)
+    tk.Label(frame_control, text="Title", bg="lightgray").pack(pady=10)
+    lable = tk.Entry(frame_control, width=50)
+    lable.pack(padx=10, pady=10)
+    tk.Label(frame_control, text="Body", bg="lightgray").pack()
+    input = tk.Text(frame_control, width=50, height=7)
+    input.pack(padx=10, pady=10)
+    button = ttk.Button(
+        frame_control,
+        text="Create",
+        width=30,
+        command=lambda: createOnFrame(frame, lable, input),
+    )
+    button.pack(padx=10, pady=10)
+    button = ttk.Button(
+        frame_control, text="Play all", width=30, command=lambda: play_all(frame)
+    )
+    button.pack(padx=10, pady=10)
+
+    root.bind("<Delete>", lambda event: createOnFrame(frame, lable, input))
 
 if __name__ == "__main__":
     root = tk.Tk()
@@ -152,28 +179,10 @@ if __name__ == "__main__":
     scrollbar = ttk.Scrollbar(root)
     scrollbar.pack(side="right", fill="y")
     canvas = tk.Canvas(root, yscrollcommand=scrollbar.set)
-    frame_control = tk.Frame(root, bg="lightgray")
-    frame_control.pack(side="right", fill="y", padx=10, pady=10)
-    canvas.pack(side="left", fill="both", expand=True)
-    tk.Label(frame_control, text="Title", bg="lightgray").pack(pady=10)
-    lable = tk.Entry(frame_control, width=50)
-    lable.pack(padx=10, pady=10)
-    tk.Label(frame_control, text="Body", bg="lightgray").pack()
-    input = tk.Text(frame_control, width=50, height=7)
-    input.pack(padx=10, pady=10)
     frame = tk.Frame(canvas)
-    button = ttk.Button(
-        frame_control,
-        text="Create",
-        width=30,
-        command=lambda: createOnFrame(frame, lable, input),
-    )
-    button.pack(padx=10, pady=10)
-
-    button = ttk.Button(
-        frame_control, text="Play all", width=30, command=lambda: play_all(frame)
-    )
-    button.pack(padx=10, pady=10)
+    set_control_frame(root, frame)
+    
+    canvas.pack(side="left", fill="both", expand=True)
 
     canvas.create_window(0, 0, window=frame, anchor="nw", width=canvas.winfo_width())
     scrollbar.config(command=canvas.yview)
@@ -183,7 +192,8 @@ if __name__ == "__main__":
         lambda e: canvas.itemconfig(canvas.find_all()[0], width=canvas.winfo_width()),
     )
     root.after(290, lambda: canvas.configure(scrollregion=canvas.bbox("all")))
-    root.bind("<Delete>", lambda event: createOnFrame(frame, lable, input))
+    
+    root.protocol("WM_DELETE_WINDOW", lambda: root.destroy())
     root.bind("<Escape>", lambda event: root.destroy())
     load(frame)
 
